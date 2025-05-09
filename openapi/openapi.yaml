@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: Todo API
+  description: A simple REST API for managing todo items
+  version: 1.0.0
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+paths:
+  /todos:
+    get:
+      summary: Get all todos
+      description: Returns a paginated list of todo items with support for filtering, sorting, and pagination
+      operationId: getTodos
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          examples:
+            firstPage:
+              value: 1
+              summary: First page
+            secondPage:
+              value: 2
+              summary: Second page
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          examples:
+            fivePerPage:
+              value: 5
+              summary: Return 5 items per page
+            tenPerPage:
+              value: 10
+              summary: Return 10 items per page
+        - name: completed
+          in: query
+          description: Filter by completion status
+          required: false
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: search
+          in: query
+          description: Search term in todo title
+          required: false
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          required: false
+          schema:
+            type: string
+            default: createdAt
+            enum: [id, title, completed, createdAt, updatedAt]
+        - name: sortOrder
+          in: query
+          description: Sort order
+          required: false
+          schema:
+            type: string
+            default: desc
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Successfully retrieved todos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTodos"
+              examples:
+                fiveItemsPerPage:
+                  summary: Example response with 5 items per page
+                  value:
+                    data:
+                      - id: 1
+                        title: "Complete project proposal"
+                        completed: true
+                        createdAt: "2025-04-15T10:00:00Z"
+                        updatedAt: "2025-04-18T14:30:00Z"
+                      - id: 2
+                        title: "Buy groceries"
+                        completed: false
+                        createdAt: "2025-04-20T08:15:00Z"
+                        updatedAt: "2025-04-20T08:15:00Z"
+                      - id: 3
+                        title: "Schedule team meeting"
+                        completed: false
+                        createdAt: "2025-04-25T09:30:00Z"
+                        updatedAt: "2025-04-25T09:30:00Z"
+                      - id: 4
+                        title: "Prepare presentation slides"
+                        completed: false
+                        createdAt: "2025-05-01T11:45:00Z"
+                        updatedAt: "2025-05-01T11:45:00Z"
+                      - id: 5
+                        title: "Review code changes"
+                        completed: true
+                        createdAt: "2025-05-02T13:20:00Z"
+                        updatedAt: "2025-05-03T16:10:00Z"
+                    total: 10
+                    totalPages: 2
+                    currentPage: 1
+                    next:
+                      page: 2
+                      limit: 5
+                    previous: null
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a new todo
+      description: Creates a new todo item
+      operationId: createTodo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoInput"
+      responses:
+        "201":
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /todos/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: Todo ID
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a specific todo by ID
+      description: Returns a single todo item by ID
+      operationId: getTodoById
+      responses:
+        "200":
+          description: Successfully retrieved todo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update a todo
+      description: Updates an existing todo item
+      operationId: updateTodo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoUpdateInput"
+      responses:
+        "200":
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a todo
+      description: Deletes an existing todo item
+      operationId: deleteTodo
+      responses:
+        "200":
+          description: Todo deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Todo:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the todo
+        title:
+          type: string
+          description: The title of the todo
+        completed:
+          type: boolean
+          description: Whether the todo is completed
+        createdAt:
+          type: string
+          format: date-time
+          description: When the todo was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the todo was last updated
+      required:
+        - id
+        - title
+        - completed
+        - createdAt
+    TodoInput:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The title of the todo
+        completed:
+          type: boolean
+          description: Whether the todo is completed
+          default: false
+      required:
+        - title
+    TodoUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The title of the todo
+        completed:
+          type: boolean
+          description: Whether the todo is completed
+    PaginatedTodos:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Todo"
+        total:
+          type: integer
+          description: Total number of todos matching the query
+        totalPages:
+          type: integer
+          description: Total number of pages
+        currentPage:
+          type: integer
+          description: Current page number
+        next:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+          nullable: true
+        previous:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+          nullable: true
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
