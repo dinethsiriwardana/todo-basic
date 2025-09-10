@@ -15,6 +15,12 @@ paths:
       description: Returns a paginated list of todo items with support for filtering, sorting, and pagination
       operationId: getTodos
       parameters:
+        - name: user-id
+          in: header
+          description: User ID for authentication (can also use 'userid')
+          required: true
+          schema:
+            type: string
         - name: page
           in: query
           description: Page number
@@ -88,26 +94,31 @@ paths:
                   value:
                     data:
                       - id: 1
+                        userId: "user1"
                         title: "Complete project proposal"
                         completed: true
                         createdAt: "2025-04-15T10:00:00Z"
                         updatedAt: "2025-04-18T14:30:00Z"
                       - id: 2
+                        userId: "user1"
                         title: "Buy groceries"
                         completed: false
                         createdAt: "2025-04-20T08:15:00Z"
                         updatedAt: "2025-04-20T08:15:00Z"
                       - id: 3
+                        userId: "user2"
                         title: "Schedule team meeting"
                         completed: false
                         createdAt: "2025-04-25T09:30:00Z"
                         updatedAt: "2025-04-25T09:30:00Z"
                       - id: 4
+                        userId: "user2"
                         title: "Prepare presentation slides"
                         completed: false
                         createdAt: "2025-05-01T11:45:00Z"
                         updatedAt: "2025-05-01T11:45:00Z"
                       - id: 5
+                        userId: "user1"
                         title: "Review code changes"
                         completed: true
                         createdAt: "2025-05-02T13:20:00Z"
@@ -125,10 +136,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create a new todo
       description: Creates a new todo item
       operationId: createTodo
+      parameters:
+        - name: user-id
+          in: header
+          description: User ID for authentication (can also use 'userid')
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -148,6 +172,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /todos/clear/all:
+    delete:
+      summary: Clear all cached todos
+      description: Resets all todos to the original sample data, clearing any cached changes
+      operationId: clearTodos
+      responses:
+        "200":
+          description: All cached todos cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+              example:
+                message: "All cached todos cleared and reset to sample data"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /todos/{id}:
     parameters:
       - name: id
@@ -156,6 +210,12 @@ paths:
         required: true
         schema:
           type: integer
+      - name: user-id
+        in: header
+        description: User ID for authentication (can also use 'userid')
+        required: true
+        schema:
+          type: string
     get:
       summary: Get a specific todo by ID
       description: Returns a single todo item by ID
@@ -167,6 +227,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Todo"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           description: Todo not found
           content:
@@ -190,6 +256,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Todo"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           description: Todo not found
           content:
@@ -207,6 +279,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Todo"
+        "401":
+          description: Unauthorized - User ID required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           description: Todo not found
           content:
@@ -221,6 +299,9 @@ components:
         id:
           type: integer
           description: Unique identifier for the todo
+        userId:
+          type: string
+          description: User ID associated with the todo
         title:
           type: string
           description: The title of the todo
@@ -237,6 +318,7 @@ components:
           description: When the todo was last updated
       required:
         - id
+        - userId
         - title
         - completed
         - createdAt

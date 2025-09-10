@@ -9,6 +9,11 @@ let idCounter =
 
 // GET all todos with pagination, sorting, and filtering
 router.get("/", (req, res) => {
+  const userId = req.headers["user-id"] || req.headers["userid"];
+  if (!userId) {
+    return res.status(401).json({ message: "User ID required in header" });
+  }
+
   // Pagination parameters
   const page = parseInt(req.query.page) || 1; // Default page is 1
   const limit = parseInt(req.query.limit) || 10; // Default limit is 10
@@ -22,7 +27,7 @@ router.get("/", (req, res) => {
     req.query.sortOrder?.toLowerCase() === "asc" ? "asc" : "desc"; // Default sort order is descending
 
   // Filter todos if needed
-  let filteredTodos = [...todos];
+  let filteredTodos = todos.filter((todo) => todo.userId === userId);
 
   // Filter by completion status if provided
   if (completed !== undefined) {
@@ -84,8 +89,13 @@ router.get("/", (req, res) => {
 
 // GET a specific todo by ID
 router.get("/:id", (req, res) => {
+  const userId = req.headers["user-id"] || req.headers["userid"];
+  if (!userId) {
+    return res.status(401).json({ message: "User ID required in header" });
+  }
+
   const id = parseInt(req.params.id);
-  const todo = todos.find((todo) => todo.id === id);
+  const todo = todos.find((todo) => todo.id === id && todo.userId === userId);
 
   if (!todo) {
     return res.status(404).json({ message: "Todo not found" });
@@ -96,6 +106,11 @@ router.get("/:id", (req, res) => {
 
 // POST create a new todo
 router.post("/", (req, res) => {
+  const userId = req.headers["user-id"] || req.headers["userid"];
+  if (!userId) {
+    return res.status(401).json({ message: "User ID required in header" });
+  }
+
   const { title, completed = false } = req.body;
 
   if (!title) {
@@ -104,6 +119,7 @@ router.post("/", (req, res) => {
 
   const newTodo = {
     id: idCounter++,
+    userId,
     title,
     completed,
     createdAt: new Date(),
@@ -115,10 +131,17 @@ router.post("/", (req, res) => {
 
 // PUT update a todo
 router.put("/:id", (req, res) => {
+  const userId = req.headers["user-id"] || req.headers["userid"];
+  if (!userId) {
+    return res.status(401).json({ message: "User ID required in header" });
+  }
+
   const id = parseInt(req.params.id);
   const { title, completed } = req.body;
 
-  const todoIndex = todos.findIndex((todo) => todo.id === id);
+  const todoIndex = todos.findIndex(
+    (todo) => todo.id === id && todo.userId === userId
+  );
 
   if (todoIndex === -1) {
     return res.status(404).json({ message: "Todo not found" });
@@ -137,8 +160,15 @@ router.put("/:id", (req, res) => {
 
 // DELETE a todo
 router.delete("/:id", (req, res) => {
+  const userId = req.headers["user-id"] || req.headers["userid"];
+  if (!userId) {
+    return res.status(401).json({ message: "User ID required in header" });
+  }
+
   const id = parseInt(req.params.id);
-  const todoIndex = todos.findIndex((todo) => todo.id === id);
+  const todoIndex = todos.findIndex(
+    (todo) => todo.id === id && todo.userId === userId
+  );
 
   if (todoIndex === -1) {
     return res.status(404).json({ message: "Todo not found" });
@@ -148,6 +178,15 @@ router.delete("/:id", (req, res) => {
   todos = todos.filter((todo) => todo.id !== id);
 
   res.json(deletedTodo);
+});
+
+// DELETE clear all cached todos (reset to sample data)
+router.delete("/clear/all", (req, res) => {
+  // Reset todos to original sample data
+  todos = [];
+  idCounter = 1;
+
+  res.json({ message: "All cached todos cleared and reset to sample data" });
 });
 
 module.exports = router;
