@@ -6,8 +6,11 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://localhost:3000/api
+  - url: https://todo-test-app-bvamb3h2hrgsarer.eastus2-01.azurewebsites.net/api
     description: Development server
+
+  - url: http://localhost:3000/api
+    description: Local server
 paths:
   /todos:
     get:
